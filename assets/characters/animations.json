@@ -1,7 +1,7 @@
 {
   "challenger": {
     "pixel_divisor": 2,
-    "faces_right": false,
+    "faces_right": true,
     "animations": {
       "idle": {
         "file": "chally_idle.png",
@@ -200,7 +200,7 @@
   },
   "boss": {
     "pixel_divisor": 1,
-    "faces_right": false,
+    "faces_right": true,
     "animations": {
       "idle": {
         "file": "boss_idle.png",

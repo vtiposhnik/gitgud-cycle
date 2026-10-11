@@ -81,7 +81,7 @@ The genuine idle loop plays on the title screen, during stationary cinematics, a
 
 - Challenger art is reduced by an **integer factor of two** using nearest-neighbor once on first load. Its roughly 59-pixel body becomes about 30 native game pixels. Boss art stays 1:1, about 55 pixels tall. Sprite node scale stays `(1,1)` during combat. The existing ending deliberately grows the Challenger vertically as part of the transformation.
 - Anchors are fixed per sheet, never inferred per frame: Challenger `(32,62)` or `(40,78)` before reduction; boss `(29,57)` for 58-pixel cells and `(32,60)` for 64-pixel cells. This preserves intentional pose movement while keeping standing feet aligned.
-- Both supplied characters face left. Facing right mirrors the sprite and its anchor; physics direction remains independent.
+- Both supplied characters face right. Facing left mirrors the sprite and its anchor; physics direction remains independent.
 - Attack segments are sampled from gameplay `state_time` and the configured startup/active/recovery durations. Increasing phase tempo does not desynchronize attack frames. Fallback poses never change damage, collision, or commitment.
 - **F3** toggles `[ANIM MISSING: STATE]` on both fighters, including while paused. The setting survives retries. Labels default on in debug/editor builds and off in release builds; F3 is inactive in release builds.
 - For new art, add or update an `animations` entry with the actual `file`, `cell`, `count`, `anchor`, `fps`, `loop`, and optional frame `indices`/phase `segments`. Remove a color key for true-alpha exports. No frame count is assumed by gameplay scripts.

@@ -36,11 +36,15 @@ func run() -> void:
 	await frames(12)
 	check(pv.sprite.frame != prior_frame, "idle animation actually advances")
 	p.facing = 1
+	b.facing = 1
 	pv.update_animation()
-	check(pv.sprite.flip_h, "left-facing source mirrors when fighter faces right")
+	bv.update_animation()
+	check(not pv.sprite.flip_h and not bv.sprite.flip_h, "both right-facing sources remain unflipped when facing right")
 	p.facing = -1
+	b.facing = -1
 	pv.update_animation()
-	check(not pv.sprite.flip_h, "source orientation restored facing left")
+	bv.update_animation()
+	check(pv.sprite.flip_h and bv.sprite.flip_h, "both right-facing sources mirror when facing left")
 	check(pv.sprite.offset == Vector2(-16,-31) and bv.sprite.offset.y == -57, "feet anchors account for per-sheet dimensions")
 	p.begin_attack("light")
 	pv.update_animation()
