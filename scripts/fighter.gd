@@ -21,6 +21,7 @@ var visual: Node2D
 var hitbox: Area2D
 var attack: Dictionary = {}
 var phase: int = 1
+var impact_direction: float = 1
 
 func _ready() -> void:
 	health = max_health
@@ -49,13 +50,17 @@ func change_state(next: String) -> void:
 	state = next
 	state_time = 0
 
-func receive_attack(_source: Fighter, data: Dictionary) -> String:
+func receive_attack(source: Fighter, data: Dictionary) -> String:
 	if health <= 0 or immunity > 0:
 		return "immune"
 	health = maxf(0, health - float(data.get("damage", 10)))
 	hurt_flash = 0.16
 	posture_delay = 1.6
-	feedback.emit("hit", global_position + Vector2(0, -20))
+	impact_direction = signf(position.x-source.position.x)
+	if impact_direction == 0: impact_direction = source.facing
+	var kind: String = "heavy_hit" if data.get("id","") == "heavy" else "light_hit"
+	if source.is_boss: kind = "major_hit" if float(data.get("damage",0)) >= 30 else "boss_hit"
+	feedback.emit(kind, global_position + Vector2(0, -20))
 	if health <= 0:
 		change_state("dead")
 		died.emit()

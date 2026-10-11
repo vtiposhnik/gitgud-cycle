@@ -102,7 +102,7 @@ func run() -> void:
 	b.health = b.max_health * 0.34
 	await frames(2)
 	check(b.phase == 3 and b.state == "transition", "35 percent health triggers phase three")
-	check(b.patterns[3][0].size() > b.patterns[1][0].size(), "phase three adds longer attack sequences")
+	check(b.max_combo_attacks[2] > b.max_combo_attacks[0] and b.combo_frequency[2] > b.combo_frequency[0], "phase three adds longer attack sequences")
 	print("RESULT: %d checks, %d failures" % [checks, failures])
 	game.queue_free()
 	await process_frame

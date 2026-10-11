@@ -1,8 +1,10 @@
-# Gitgud: Cycle
+# Gitgud: Cycle — v0.2
 
 A playable, keyboard-first 2D Soulslike boss duel made in **Godot 4.6 / GDScript**. One ceremonial hall, one former victor, three continuous phases. Your only progression is learning the fight.
 
-![The duel](docs/screenshots/duel.png)
+![The duel with supplied sprites](docs/screenshots/v02/duel.png)
+
+Version 0.2 adds a sharp 46-pixel dash, supplied sprite animations, contextual boss branches, and stronger impacts. See [the changelog](docs/V02_CHANGELOG.md) and [animation inventory](docs/ANIMATION_STATUS.md).
 
 ## Play
 
@@ -30,6 +32,7 @@ The game renders at **480×270**, scales in whole pixels, keeps a 16:9 aspect ra
 | Enter | Start; also skips the introduction |
 | Tab | Skip introduction |
 | M | Mute / unmute synthesized sound effects |
+| F3 | Toggle missing-animation labels in development builds |
 
 See [CONTROLS.md](CONTROLS.md) for timing and combat rules.
 
@@ -56,10 +59,11 @@ See [CONTROLS.md](CONTROLS.md) for timing and combat rules.
 - `scenes/main.tscn`: ready-to-run entry scene; the world is assembled from built-in nodes.
 - `scripts/game.gd`: title, skippable intro, fight, death/retry, ending, pause, particles and hit-stop.
 - `scripts/player.gd`: movement and action state machine; exported movement, parry, dodge and recovery parameters; attack specifications in `begin_attack`.
-- `scripts/boss.gd`: explicit idle/approach/reposition/startup/active/recovery/stagger/transition/dead states; six attack dictionaries; phase patterns and thresholds.
+- `scripts/boss.gd`: explicit idle/approach/reposition/startup/active/recovery/stagger/transition/dead states; six attack dictionaries; contextual selection, bounded optional combo branches, phase aggression and thresholds.
 - `scripts/fighter.gd`: shared health, posture, physical body and feedback signals.
 - `scripts/hitbox.gd`: actual `Area2D` sword collisions, opponent-only masks, and per-swing hit deduplication.
-- `scripts/character_visual.gd`: code-drawn pixel silhouettes and pose animation, separate from hit detection. Uses the supplied art only for character identity and proportions.
+- `scripts/character_visual.gd`: `AnimatedSprite2D` presentation, gameplay-synchronized attack segments, same-character fallback poses, afterimages and missing-state labels.
+- `scripts/animation_library.gd`: cached sheet loading, alpha/key handling, integer scale, frame layout and fallback resolution; data in `assets/characters/animations.json`.
 - `scripts/arena.gd`: masonry, throne, mural, parallax, phase visuals, motes, chain and attack tells.
 - `scripts/hud.gd`: bars, stance, death count, tells, dialogue and overlays.
 - `scripts/sound.gd`: short synthesized PCM effects with no external assets.
@@ -80,10 +84,14 @@ On Windows use `python tools/check.py`; set `GODOT` to the Godot console executa
 - 17 combat checks: movement, jump, real hitboxes, damage, parry, dodge, guard, posture, phase thresholds and patterns.
 - 19 loop checks: complete intro, controls, pause, natural AI death, retry, all six attacks, victory, transformation and skip.
 - 9 timing checks: jump buffering, coyote time, attack buffering, facing, player posture break, unparryable attacks, hit-stop and retry cleanup.
+- 10 movement checks: exact dash travel, instant speed, locked direction, stopping, buffers and commitment.
+- 19 animation checks: all sheets, alpha, alignment, flipping, playback, timing and fallbacks.
+- 13 AI checks: contextual selection, optional branches, commitment, recovery and cancellation.
+- 7 feedback checks: cue differentiation, directional sparks, impact strength and recoil.
 - 3 real-time audio checks: synthesized buffers, playback start, and playback completion.
 - One complete input-driven duel: normal controls defeat the boss through every phase and encounter all six attack types. No health, damage, phase or invulnerability cheats are used. Presentation hit-stop is disabled only in this deterministic run and tested separately.
 
-**Executed successfully on Linux using Godot 4.6.3.** Graphical runs used the real Compatibility renderer under Xvfb/Mesa; captured frames are in `docs/screenshots/`. This is automated execution and visual inspection, not a human balance playtest. Windows native execution and hardware performance have not been measured.
+**Executed successfully on Linux using Godot 4.6.3.** Graphical runs used the real Compatibility renderer under Xvfb/Mesa; v0.2 captures are in `docs/screenshots/v02/`. All 97 assertions and one input-driven duel pass. This is automated execution and visual inspection, not a human balance playtest. Windows native execution and hardware performance have not been measured.
 
 For a fresh graphical capture with a display available:
 
@@ -99,8 +107,8 @@ The project runs directly in the Windows editor. A `Windows Desktop` export pres
 
 ## Scope and known limitations
 
-- This is deliberately simple code-drawn placeholder art, including the weapon poses, transformation, and mural. It is not the supplied character sheet converted into sprites.
-- Six attacks and all three phases work; timing, damage, readability and difficulty still need human playtesting. The perfect-timing automated player is a reachability check, not evidence of suitable difficulty.
+- All 12 supplied character sheets are integrated. Dedicated player attacks and five boss attacks are still missing; existing sprite poses and explicit development labels cover them. See the animation inventory for every fallback.
+- Six attacks, contextual combo branches and all three phases work; timing, damage, readability and difficulty still need human playtesting. The perfect-timing automated player is a reachability check, not evidence of suitable difficulty.
 - The fight has synthesized effects but no music, voice acting, controller support, keybinding menu, save system or accessibility settings. Death count is retained through retries during the current session only.
 - No exploration, inventory, leveling or additional enemies are planned for this MVP.
 - The arena is a single screen with minor background parallax. There are no scrolling rooms or elaborate environmental animations.

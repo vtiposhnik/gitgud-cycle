@@ -1,75 +1,129 @@
 extends Node2D
 
+var sprite: AnimatedSprite2D
+var library: Dictionary
+var requested_animation: String = "idle"
+var missing_animation: String = ""
+var show_missing_labels: bool = OS.is_debug_build()
 var clock: float = 0
+var ghosts: Array[Dictionary] = []
+var ghost_timer: float = 0
+var actor: Fighter
+
+func _ready() -> void:
+	actor = get_parent() as Fighter
+	library = CharacterAnimations.acquire("boss" if actor.is_boss else "challenger")
+	sprite = AnimatedSprite2D.new()
+	sprite.sprite_frames = library.frames
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	sprite.centered = false
+	add_child(sprite)
+	sprite.play("idle")
 
 func _process(delta: float) -> void:
 	clock += delta
+	ghost_timer -= delta
+	for i in range(ghosts.size()-1,-1,-1):
+		ghosts[i].life -= delta
+		if ghosts[i].life <= 0: ghosts.remove_at(i)
+	update_animation()
+	if actor.state == "dodge" and ghost_timer <= 0:
+		ghost_timer = 0.025
+		ghosts.append({"position":actor.position,"texture":sprite.sprite_frames.get_frame_texture(sprite.animation,sprite.frame),
+			"offset":sprite.offset,"flip":sprite.flip_h,"life":0.10})
 	queue_redraw()
 
+func desired_animation() -> String:
+	match actor.state:
+		"dead": return "death"
+		"dodge", "dodge_recovery": return "dash"
+		"transition": return "phase_transition"
+		"staggered":
+			return "stagger" if actor.stun_duration >= 0.9 else "hurt"
+		"parry": return "parry_success" if actor.parry_success else "parry"
+		"startup", "active", "recovery":
+			var id: String = actor.attack.get("id","light")
+			return {"light":"light_attack","heavy":"heavy_attack","sweep":"chain_sweep","feint":"delayed_heavy","recall":"chain_recall"}.get(id,id)
+	if not actor.enabled and absf(actor.velocity.x) < 1: return "idle"
+	if not actor.is_boss:
+		if actor.velocity.y < -1: return "jump"
+		if actor.velocity.y > 1: return "fall"
+		if actor.landing_time > 0: return "landing"
+		if actor.stance_time > 0: return "stance_transition"
+	if absf(actor.velocity.x) > 8: return "walk"
+	if not actor.is_boss: return "defensive_stance" if actor.defensive else "offensive_stance"
+	return "idle"
+
+func update_animation() -> void:
+	requested_animation = desired_animation()
+	var resolved := CharacterAnimations.resolve(library,requested_animation)
+	missing_animation = requested_animation if resolved.missing else ""
+	var spec: Dictionary = library.metadata[resolved.name]
+	var changed: bool = sprite.animation != resolved.name
+	if changed: sprite.play(resolved.name)
+	var divisor: int = int(library.config.pixel_divisor)
+	var origin := Vector2(round(float(spec.anchor[0])/divisor),round(float(spec.anchor[1])/divisor))
+	sprite.flip_h = (actor.facing > 0) != bool(library.config.faces_right)
+	var cell_width: float = float(spec.cell[0])/divisor
+	sprite.offset = Vector2(origin.x-cell_width if sprite.flip_h else -origin.x,-origin.y)
+	sprite.modulate = Color("ffe8ca") if actor.hurt_flash > 0 else Color.WHITE
+	if resolved.missing:
+		if resolved.pose >= 0:
+			sprite.pause()
+			sprite.set_frame_and_progress(clampi(resolved.pose,0,sprite.sprite_frames.get_frame_count(resolved.name)-1),0)
+		elif not sprite.is_playing(): sprite.play(resolved.name)
+	elif actor.state in ["startup","active","recovery"] and spec.has("segments"):
+		var segment: Array = spec.segments[actor.state]
+		pose_segment(segment, actor.state_time / maxf(float(actor.attack.get(actor.state,0.2)),0.001))
+	elif actor.state == "parry":
+		var window: float = actor.defensive_parry_window if actor.defensive else actor.offensive_parry_window
+		var parry_segment: Array = spec.segments.window if actor.state_time <= window else spec.segments.recovery
+		var progress: float = actor.state_time/window if actor.state_time <= window else (actor.state_time-window)/(actor.parry_recovery-window)
+		pose_segment(parry_segment,progress)
+	elif actor.state in ["dodge","dodge_recovery"]:
+		pose_segment([0,sprite.sprite_frames.get_frame_count(resolved.name)-1],actor.dash_elapsed/maxf(actor.dodge_duration,0.001))
+	elif actor.state == "staggered":
+		pose_segment([0,sprite.sprite_frames.get_frame_count(resolved.name)-1],actor.state_time/maxf(actor.stun_duration,0.001))
+	elif not sprite.is_playing() and (changed or spec.loop):
+		sprite.play(resolved.name)
+
+func pose_segment(segment: Array, progress: float) -> void:
+	sprite.pause()
+	var first := int(segment[0])
+	var last := int(segment[1])
+	var index := first + mini(int(clampf(progress,0,1)*float(last-first+1)),last-first)
+	sprite.set_frame_and_progress(index,0)
+
 func _draw() -> void:
-	var a := get_parent() as Fighter
-	var b := a.is_boss
-	var h: float = 49 if b else 28
-	var f := a.facing
-	var moving: bool = absf(a.velocity.x) > 12
-	var step: float = sin(clock * 13) * (4.0 if moving else 0.4)
-	var skin := Color("a9a1b8") if b else Color("b7b3a3")
-	var cloth := Color("292c3d") if b else Color("354349")
-	var ivory := Color("ddd9be")
-	var accent := Color("baa1df") if b else (Color("94d8da") if a.defensive else Color("e6b67b"))
-	if a.hurt_flash > 0:
-		skin = Color.WHITE
-		cloth = Color("c7d5dc")
-	var collapse: float = clampf(a.state_time / 0.8, 0, 1) if a.state == "dead" else 0.0
-	draw_set_transform(Vector2(0, -2), collapse * f * 1.3, Vector2(1, 1 - collapse * 0.45))
-	# Long, separated legs and bare feet give both silhouettes a human rhythm.
-	draw_line(Vector2(-3, -h * 0.43), Vector2(-5 + step, -2), skin, 3)
-	draw_line(Vector2(3, -h * 0.43), Vector2(5 - step, -2), skin, 3)
-	draw_line(Vector2(-6 + step, -1), Vector2(-2 + step, -1), skin, 2)
-	draw_line(Vector2(4 - step, -1), Vector2(8 - step, -1), skin, 2)
-	draw_colored_polygon(PackedVector2Array([Vector2(-5, -h + 9), Vector2(4, -h + 9), Vector2(5, -h * 0.4), Vector2(-6, -h * 0.37)]), cloth)
-	draw_rect(Rect2(-4, -h * 0.48, 9, 3), Color("8a795e"))
-	draw_line(Vector2(-3, -h * 0.65), Vector2(-6, -h * 0.27), cloth, 3)
-	draw_rect(Rect2(-3, -h, 6, 8), skin)
-	if b:
-		draw_colored_polygon(PackedVector2Array([Vector2(-4, -h), Vector2(5, -h), Vector2(2, -h+10), Vector2(-2, -h+7)]), ivory)
-		draw_line(Vector2(-3, -h), Vector2(-7, -h-8), skin, 2)
-		draw_line(Vector2(-7, -h-8), Vector2(-3, -h-13), skin, 2)
-		draw_line(Vector2(3, -h), Vector2(8, -h-7), skin, 2)
-		draw_line(Vector2(8, -h-7), Vector2(7, -h-11), skin, 2)
-		draw_rect(Rect2(f * 1, -h+3, 2, 2), Color("272936"))
-	else:
-		draw_rect(Rect2(-4, -h-1, 7, 3), ivory)
-		draw_line(Vector2(-f * 3, -h+1), Vector2(-f * 8, -h+5), ivory, 2)
-		draw_line(Vector2(-f * 8, -h+5), Vector2(-f * 7, -h+10), ivory, 2)
-	var hand := Vector2(f * 8, -h * 0.57)
-	var tip := hand + Vector2(f * (35 if b else 25), 14)
-	if a.state in ["startup", "active", "recovery"]:
-		var style: String = a.attack.get("id", "light")
-		if a.state == "startup":
-			tip = hand + Vector2(-f * 12, -42 if b else -23)
-			if style == "thrust": tip = hand + Vector2(f * 29, 0)
-			if style == "feint": tip.y += sin(a.state_time * 12) * 5
+	if actor == null or sprite == null: return
+	var accent := Color("bca4dc") if actor.is_boss else (Color("9ee6dd") if actor.defensive else Color("eaca99"))
+	for ghost in ghosts:
+		var pos: Vector2 = ghost.position - actor.position + ghost.offset
+		var size: Vector2 = ghost.texture.get_size()
+		var rect := Rect2(pos,size)
+		if ghost.flip:
+			rect.position.x += size.x
+			rect.size.x = -size.x
+		draw_texture_rect(ghost.texture,rect,false,Color(0.55,0.85,0.9,ghost.life*3))
+	if actor.state == "active" and actor.hitbox != null:
+		# Effects follow collision geometry even when the authored attack is absent.
+		var center: Vector2 = actor.hitbox.position
+		var size: Vector2 = actor.attack.get("size",Vector2(34,27))
+		if actor.attack.get("id","") == "thrust":
+			draw_line(center-Vector2(size.x/2,0),center+Vector2(size.x/2,0),accent,2)
 		else:
-			tip = hand + Vector2(f * (52 if b else 31), -2)
-			if style in ["overhead", "feint"]: tip = hand + Vector2(f * 30, h * 0.52)
-		if a.state == "active":
-			draw_arc(hand, 45 if b else 29, -0.8 if f > 0 else 2.3, 0.5 if f > 0 else 3.6, 8, accent, 2)
-	if a.state == "parry":
-		tip = hand + Vector2(-f * 10, -27)
-		draw_arc(Vector2(f * 9, -18), 16, -1.4 if f > 0 else 1.7, 1.4 if f > 0 else 4.5, 8, accent, 1)
-	draw_line(Vector2(f * 3, -h+11), hand, skin, 3)
-	if b:
-		for i in range(7):
-			var p := hand.lerp(Vector2(-f * 10, -10), float(i) / 6)
-			p.y += sin(float(i) / 6 * PI) * 7
-			draw_rect(Rect2(p, Vector2(2, 2)), Color("7b738b"))
-	draw_line(hand, tip, Color("565c67"), 5 if b else 2)
-	draw_line(hand + Vector2(0,-1), tip + Vector2(0,-1), ivory, 2 if b else 1)
-	draw_line(hand + Vector2(0,-4), hand + Vector2(0,4), Color("a79572"), 2)
-	for i in range(3):
-		var spread: float = 11 if a.defensive else 19
-		if b: spread = 22 + (4 if a.phase == 3 else 0)
-		var relic := Vector2(cos(clock * 0.7 + i * 2.1) * spread, -h * 0.65 + sin(clock * 1.5+i*2.1) * 12)
-		draw_rect(Rect2(relic, Vector2(3, 7)), Color("45475a"))
-		draw_rect(Rect2(relic, Vector2(1, 5)), accent)
+			var from: float = -0.8 if actor.facing > 0 else PI-0.8
+			draw_arc(Vector2(0,center.y),size.x*0.7,from,from+1.6,9,accent,2)
+			draw_line(center+Vector2(-size.x/2,2),center+Vector2(size.x/2,2),Color(accent,0.45),1)
+	if actor.state == "parry":
+		draw_arc(Vector2(actor.facing*9,-18),15,-1.4 if actor.facing>0 else 1.7,1.4 if actor.facing>0 else 4.5,9,accent,1)
+	if not actor.is_boss and actor.health > 0:
+		draw_line(Vector2(-4,-1),Vector2(4,-1),accent,1)
+	if show_missing_labels and not missing_animation.is_empty():
+		var label := "[ANIM MISSING: %s]" % missing_animation.to_upper()
+		var font := ThemeDB.fallback_font
+		var width := font.get_string_size(label,HORIZONTAL_ALIGNMENT_LEFT,-1,7).x
+		var x: float = clampf(actor.position.x-width/2,3,477-width)-actor.position.x
+		var y: float = -83 if actor.is_boss else -43
+		draw_rect(Rect2(x-2,y-8,width+4,11),Color(0.025,0.04,0.07,0.9))
+		draw_string(font,Vector2(x,y),label,HORIZONTAL_ALIGNMENT_LEFT,-1,7,Color("b4c2cd"))

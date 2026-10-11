@@ -12,6 +12,7 @@ func run() -> void:
 	game.start_fight()
 	var p: Challenger = game.player
 	var b: FormerVictor = game.boss
+	b.rng.seed = 713
 	var seen_phases: Dictionary = {}
 	var parries: int = 0
 	var used_attacks: Dictionary = {}

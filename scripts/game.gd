@@ -1,5 +1,11 @@
 extends Node2D
 
+@export var hitstop_durations: Dictionary = {"light_hit":0.028,"heavy_hit":0.052,"boss_hit":0.04,"major_hit":0.06,"parry":0.065,"break":0.085,"phase":0.025}
+@export var hitstop_scale: float = 0.06
+@export var shake_strength: float = 1.0
+var flash_time: float = 0
+var flash_position: Vector2 = Vector2.ZERO
+var flash_kind: String = ""
 var player: Challenger
 var boss: FormerVictor
 var world: Node2D
@@ -19,6 +25,7 @@ var hitstop_enabled: bool = true
 var shake: float = 0
 var particles: Array[Dictionary] = []
 var intro_clashed: bool = false
+var show_animation_labels: bool = OS.is_debug_build()
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -65,8 +72,10 @@ func spawn_fighters() -> void:
 	boss.facing = -1
 	boss.enabled = false
 	world.add_child(boss)
-	player.feedback.connect(on_feedback)
-	boss.feedback.connect(on_feedback)
+	player.visual.show_missing_labels = show_animation_labels
+	boss.visual.show_missing_labels = show_animation_labels
+	player.feedback.connect(on_actor_feedback.bind(player))
+	boss.feedback.connect(on_actor_feedback.bind(boss))
 	player.died.connect(on_player_died)
 	boss.died.connect(on_boss_died)
 	boss.phase_changed.connect(on_phase_changed)
@@ -77,10 +86,15 @@ func _process(delta: float) -> void:
 		hitstop -= real_delta
 		if hitstop <= 0: Engine.time_scale = 1.0
 	if Input.is_action_just_pressed("mute"): sound.muted = not sound.muted
+	if OS.is_debug_build() and Input.is_action_just_pressed("animation_debug"):
+		show_animation_labels = not show_animation_labels
+		player.visual.show_missing_labels = show_animation_labels
+		boss.visual.show_missing_labels = show_animation_labels
 	if Input.is_action_just_pressed("pause") and mode in ["fight","intro"]:
 		paused = not paused
 		get_tree().paused = paused
 	if paused: return
+	flash_time = maxf(0,flash_time-delta)
 	mode_time += delta
 	banner_time = maxf(0,banner_time-delta)
 	shake = maxf(0,shake-real_delta*18)
@@ -167,6 +181,7 @@ func retry() -> void:
 	player.queue_free()
 	boss.queue_free()
 	particles.clear()
+	flash_time = 0
 	spawn_fighters()
 	start_fight()
 
@@ -193,20 +208,35 @@ func on_phase_changed(value: int) -> void:
 	banner = "RECOGNITION" if value == 2 else "INHERITANCE"
 	banner_time = 2.2
 
-func on_feedback(kind: String, where: Vector2) -> void:
+func on_actor_feedback(kind: String, where: Vector2, actor: Fighter) -> void:
+	var direction: float = actor.impact_direction if kind.ends_with("hit") else actor.facing
+	on_feedback(kind,where-world.position,direction)
+
+func on_feedback(kind: String, where: Vector2, direction: float = 1.0) -> void:
 	sound.play(kind)
-	var impactful := kind in ["hit","parry","break","phase"]
+	var impactful: bool = hitstop_durations.has(kind)
+	var strong: bool = kind in ["parry","break","heavy_hit","major_hit"]
 	if impactful:
-		shake = 3.2 if kind in ["parry","break"] else 1.5
+		shake = maxf(shake,(2.8 if strong else 1.1) * shake_strength)
+		flash_time = 0.13 if kind == "break" else (0.085 if kind == "parry" else 0.055)
+		flash_position = where
+		flash_kind = kind
 		if hitstop_enabled and mode in ["fight","intro"]:
-			hitstop = 0.065 if kind == "parry" else (0.08 if kind == "break" else 0.035)
-			Engine.time_scale = 0.06
-	var color := Color("a6e0e0") if kind == "parry" else Color("c6aa83")
-	if kind == "phase": color = Color("b5a0cd")
-	for i in range(16 if impactful else 5):
-		var angle: float = TAU * float(i) / (16 if impactful else 5)
-		particles.append({"position":where, "velocity":Vector2(cos(angle)*75,sin(angle)*55-20),
-			"life":0.3 if impactful else 0.18,"color":color})
+			hitstop = maxf(hitstop,float(hitstop_durations[kind]))
+			Engine.time_scale = hitstop_scale
+	var color := Color("c2ffef") if kind == "parry" else Color("e9c18c")
+	if kind in ["phase","break"]: color = Color("d2b4ef")
+	if kind == "parry_fail": color = Color("a68b99")
+	var count: int = 22 if strong else (11 if impactful else 4)
+	for i in range(count):
+		var angle: float = lerpf(-1.1,1.1,float(i)/maxf(1,count-1))
+		var speed: float = (105 if strong else 60) * (0.5 + float(i%3)*0.25)
+		var velocity := Vector2(cos(angle)*direction*speed,sin(angle)*speed-20)
+		if kind in ["parry","break"]:
+			angle = TAU*float(i)/count
+			velocity = Vector2(cos(angle),sin(angle))*speed
+		particles.append({"position":where,"velocity":velocity,
+			"life":0.26 if impactful else 0.13,"color":color})
 
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0

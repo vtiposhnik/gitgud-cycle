@@ -20,15 +20,17 @@ for key, folder in [("XDG_DATA_HOME", "data"), ("XDG_CONFIG_HOME", "config"), ("
     environment.setdefault(key, str(path))
 commands = [["--editor", "--import", "--quit"]]
 commands += [["--fixed-fps", "60", "--script", f"tests/{name}_test.gd"]
-             for name in ["combat", "loop", "timing", "duel"]]
+             for name in ["combat", "loop", "timing", "movement", "animation", "boss_ai", "feedback", "duel"]]
 commands.append(["--script", "tests/audio_test.gd"])
+assertions = 0
 for command in commands:
     print("Running:", " ".join(command), flush=True)
     result = subprocess.run([GODOT, "--headless", "--path", str(ROOT), *command],
                             env=environment, text=True, stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT, timeout=120)
     print(result.stdout, end="", flush=True)
+    assertions += sum(int(n) for n in re.findall(r"RESULT: (\d+) checks, 0 failures", result.stdout))
     # Godot's import command can return zero even when a script has a parse error.
     if result.returncode or re.search(r"(?m)^(SCRIPT ERROR:|ERROR:)", result.stdout):
         sys.exit(result.returncode or 1)
-print("ALL CHECKS PASSED: 48 assertions and one complete input-driven duel.")
+print(f"ALL CHECKS PASSED: {assertions} assertions and one complete input-driven duel.")

@@ -1,0 +1,359 @@
+{
+  "challenger": {
+    "pixel_divisor": 2,
+    "faces_right": false,
+    "animations": {
+      "idle": {
+        "file": "chally_idle.png",
+        "cell": [
+          64,
+          64
+        ],
+        "count": 8,
+        "fps": 7,
+        "loop": true,
+        "anchor": [
+          32,
+          62
+        ],
+        "color_key": "#d9a3f6"
+      },
+      "walk": {
+        "file": "chally_walk.png",
+        "cell": [
+          64,
+          64
+        ],
+        "count": 8,
+        "fps": 14,
+        "loop": true,
+        "anchor": [
+          32,
+          62
+        ]
+      },
+      "dash": {
+        "file": "chally_dash.png",
+        "cell": [
+          64,
+          64
+        ],
+        "count": 8,
+        "fps": 60,
+        "loop": false,
+        "anchor": [
+          32,
+          62
+        ]
+      },
+      "jump": {
+        "file": "chally_jump.png",
+        "cell": [
+          80,
+          80
+        ],
+        "count": 8,
+        "fps": 16,
+        "loop": false,
+        "anchor": [
+          40,
+          78
+        ],
+        "indices": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "fall": {
+        "file": "chally_jump.png",
+        "cell": [
+          80,
+          80
+        ],
+        "count": 8,
+        "fps": 12,
+        "loop": false,
+        "anchor": [
+          40,
+          78
+        ],
+        "indices": [
+          5,
+          6
+        ]
+      },
+      "landing": {
+        "file": "chally_jump.png",
+        "cell": [
+          80,
+          80
+        ],
+        "count": 8,
+        "fps": 10,
+        "loop": false,
+        "anchor": [
+          40,
+          78
+        ],
+        "indices": [
+          7
+        ]
+      },
+      "parry": {
+        "file": "chally_parry.png",
+        "cell": [
+          64,
+          64
+        ],
+        "count": 8,
+        "fps": 20,
+        "loop": false,
+        "anchor": [
+          32,
+          62
+        ],
+        "color_key": "#d9a4f6",
+        "segments": {
+          "window": [
+            0,
+            3
+          ],
+          "recovery": [
+            4,
+            7
+          ]
+        }
+      },
+      "hurt": {
+        "file": "chally_hurt.png",
+        "cell": [
+          64,
+          64
+        ],
+        "count": 8,
+        "fps": 24,
+        "loop": false,
+        "anchor": [
+          32,
+          62
+        ]
+      },
+      "stagger": {
+        "file": "chally_stumble.png",
+        "cell": [
+          64,
+          64
+        ],
+        "count": 8,
+        "fps": 14,
+        "loop": false,
+        "anchor": [
+          32,
+          62
+        ]
+      },
+      "death": {
+        "file": "chally_death.png",
+        "cell": [
+          64,
+          64
+        ],
+        "count": 8,
+        "fps": 10,
+        "loop": false,
+        "anchor": [
+          32,
+          62
+        ],
+        "color_key": "#d9a5f6"
+      }
+    },
+    "fallbacks": {
+      "offensive_stance": {
+        "animation": "idle",
+        "pose": -1
+      },
+      "defensive_stance": {
+        "animation": "idle",
+        "pose": -1
+      },
+      "stance_transition": {
+        "animation": "idle",
+        "pose": 0
+      },
+      "light_attack": {
+        "animation": "parry",
+        "pose": 2
+      },
+      "heavy_attack": {
+        "animation": "parry",
+        "pose": 4
+      },
+      "parry_success": {
+        "animation": "parry",
+        "pose": 5
+      }
+    }
+  },
+  "boss": {
+    "pixel_divisor": 1,
+    "faces_right": false,
+    "animations": {
+      "idle": {
+        "file": "boss_idle.png",
+        "cell": [
+          58,
+          58
+        ],
+        "count": 8,
+        "fps": 7,
+        "loop": true,
+        "anchor": [
+          29,
+          57
+        ],
+        "color_key": "#01ccb8"
+      },
+      "walk": {
+        "file": "boss_walk.png",
+        "cell": [
+          58,
+          58
+        ],
+        "count": 8,
+        "fps": 12,
+        "loop": true,
+        "anchor": [
+          29,
+          57
+        ],
+        "color_key": "#01ccb7"
+      },
+      "slash": {
+        "file": "boss_swordslash_basic.png",
+        "cell": [
+          64,
+          64
+        ],
+        "count": 8,
+        "fps": 12,
+        "loop": false,
+        "anchor": [
+          32,
+          60
+        ],
+        "color_key": "#01ccb7",
+        "segments": {
+          "startup": [
+            0,
+            2
+          ],
+          "active": [
+            3,
+            5
+          ],
+          "recovery": [
+            6,
+            7
+          ]
+        }
+      },
+      "death": {
+        "file": "boss_defeat.png",
+        "cell": [
+          64,
+          64
+        ],
+        "count": 8,
+        "fps": 9,
+        "loop": false,
+        "anchor": [
+          32,
+          60
+        ],
+        "color_key": "#01cfba"
+      }
+    },
+    "fallbacks": {
+      "jump": {
+        "animation": "idle",
+        "pose": 0
+      },
+      "fall": {
+        "animation": "idle",
+        "pose": 0
+      },
+      "landing": {
+        "animation": "idle",
+        "pose": 0
+      },
+      "dash": {
+        "animation": "idle",
+        "pose": 0
+      },
+      "parry": {
+        "animation": "idle",
+        "pose": 0
+      },
+      "parry_success": {
+        "animation": "idle",
+        "pose": 0
+      },
+      "hurt": {
+        "animation": "idle",
+        "pose": 0
+      },
+      "stagger": {
+        "animation": "idle",
+        "pose": 0
+      },
+      "offensive_stance": {
+        "animation": "idle",
+        "pose": 0
+      },
+      "defensive_stance": {
+        "animation": "idle",
+        "pose": 0
+      },
+      "stance_transition": {
+        "animation": "idle",
+        "pose": 0
+      },
+      "phase_transition": {
+        "animation": "idle",
+        "pose": 0
+      },
+      "light_attack": {
+        "animation": "slash",
+        "pose": 2
+      },
+      "heavy_attack": {
+        "animation": "slash",
+        "pose": 2
+      },
+      "overhead": {
+        "animation": "slash",
+        "pose": 2
+      },
+      "thrust": {
+        "animation": "slash",
+        "pose": 2
+      },
+      "chain_sweep": {
+        "animation": "slash",
+        "pose": 2
+      },
+      "delayed_heavy": {
+        "animation": "slash",
+        "pose": 2
+      },
+      "chain_recall": {
+        "animation": "slash",
+        "pose": 2
+      }
+    }
+  }
+}

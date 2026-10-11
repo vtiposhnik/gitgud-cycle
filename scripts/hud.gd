@@ -26,6 +26,14 @@ func _draw() -> void:
 	var b: FormerVictor = game.boss
 	for particle in game.particles:
 		draw_rect(Rect2(particle.position + game.world.position, Vector2(2,1)),particle.color)
+	if game.flash_time > 0:
+		var center: Vector2 = game.flash_position + game.world.position
+		var flash_color := Color("d5fff7") if game.flash_kind == "parry" else Color("f5d3a2")
+		var radius: float = 13 if game.flash_kind == "parry" else (20 if game.flash_kind == "break" else 7)
+		flash_color.a = minf(1,game.flash_time*14)
+		draw_line(center-Vector2(radius,0),center+Vector2(radius,0),flash_color,2)
+		draw_line(center-Vector2(0,radius),center+Vector2(0,radius),flash_color,1)
+		if game.flash_kind in ["parry","break"]: draw_arc(center,radius,0,TAU,12,flash_color,1)
 	if game.hitstop > 0 and game.shake > 2:
 		draw_rect(Rect2(0,0,480,270),Color(0.75,0.9,1.0,0.09))
 	if game.mode in ["fight","death"]:
@@ -58,8 +66,8 @@ func _draw() -> void:
 		centered("[ ENTER ]  CHALLENGE THE VICTOR",188,10,ink)
 		centered("A D  move   /   SPACE  jump   /   J K  light · heavy",217,8,quiet)
 		centered("L  parry   /   SHIFT  dodge   /   Q  stance",231,8,quiet)
-		text("PLAYABLE PROTOTYPE  /  v0.1",Vector2(16,259),7,quiet)
-		text("M  SOUND    ESC  PAUSE",Vector2(348,259),7,quiet)
+		text("PLAYABLE PROTOTYPE  /  v0.2",Vector2(16,259),7,quiet)
+		text("F3  LABELS    ESC  PAUSE",Vector2(348,259),7,quiet)
 	if game.mode == "intro":
 		draw_rect(Rect2(0,0,480,29),Color("080f17"))
 		draw_rect(Rect2(0,229,480,41),Color("080f17"))
@@ -83,5 +91,5 @@ func _draw() -> void:
 		centered("A D  move    SPACE  jump    SHIFT  dodge",115,10,quiet)
 		centered("J  light    K  heavy    L  parry    Q  stance",135,10,quiet)
 		centered("Gold tells: parry. Violet tells: jump or dodge.",159,9,gold)
-		centered("M  toggle sound    ESC  return",186,10,ink)
+		centered("M  sound    F3  animation labels    ESC  return",186,10,ink)
 		centered("Assault: speed and damage. Guard: forgiving parries.",215,9,quiet)
