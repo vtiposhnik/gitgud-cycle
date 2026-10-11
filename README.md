@@ -6,6 +6,8 @@ A playable, keyboard-first 2D Soulslike boss duel made in **Godot 4.6 / GDScript
 
 Version 0.2 adds a sharp 46-pixel dash, supplied sprite animations, contextual boss branches, and stronger impacts. See [the changelog](docs/V02_CHANGELOG.md) and [animation inventory](docs/ANIMATION_STATUS.md).
 
+New to the code? Start with the [codebase and tuning cheatsheet](docs/CODEBASE_CHEATSHEET.md): exact locations and examples for HP, damage, movement, boss difficulty, and sprites.
+
 ## Play
 
 1. Install the standard **Godot 4.6.x** editor; .NET is not required.
