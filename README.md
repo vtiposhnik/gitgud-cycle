@@ -1,23 +1,3 @@
-# Gitgud: Cycle — v0.2
-
-A playable, keyboard-first 2D Soulslike boss duel made in **Godot 4.6 / GDScript**. One ceremonial hall, one former victor, three continuous phases. Your only progression is learning the fight.
-
-![The duel with supplied sprites](docs/screenshots/v02/duel.png)
-
-Version 0.2 adds a sharp 46-pixel dash, supplied sprite animations, contextual boss branches, and stronger impacts. See [the changelog](docs/V02_CHANGELOG.md) and [animation inventory](docs/ANIMATION_STATUS.md).
-
-New to the code? Start with the [codebase and tuning cheatsheet](docs/CODEBASE_CHEATSHEET.md): exact locations and examples for HP, damage, movement, boss difficulty, and sprites.
-
-## Play
-
-1. Install the standard **Godot 4.6.x** editor; .NET is not required.
-2. Import this folder's `project.godot` in the Godot project manager.
-3. Press **F6** with `scenes/main.tscn` open, or **F5** to run the project.
-4. Press **Enter** to start. **Tab** skips the introduction.
-
-Alternatively, from this folder: `godot --path .`
-
-The game renders at **480×270**, scales in whole pixels, keeps a 16:9 aspect ratio, and opens at 1440×810. Resize to another integer multiple for clean pixels. Physics runs at 60 Hz; rendering is capped at 60 FPS. The Compatibility renderer targets modest integrated GPUs. No downloads, plugins, paid assets, credentials, or runtime services are needed.
 
 ### Controls
 
